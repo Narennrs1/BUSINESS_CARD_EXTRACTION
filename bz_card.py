@@ -70,6 +70,7 @@ def uploaded_image(Card_img):
 
 st.set_page_config(page_title="BUSIESS CARD EXTRACTION",
                    layout="wide",
+                   page_icon="🧊",
                    initial_sidebar_state='auto'
                    )
 
@@ -101,73 +102,98 @@ if selected=="Upload":
     if bz_cd != None:
         get_img = Image.open(bz_cd)
         st.image(get_img,width=300,caption="Uploaded Business card")
-        read=st.button(":red[Read Image]")
-        if read:
-            reader_ocr = ecocr()
-            add1 = reader_ocr.readtext(np.array(get_img),detail=0)
-            df=uploaded_image(add1)
-            im_df=pd.DataFrame(df)
-            st.dataframe(im_df)
+        reader_ocr = ecocr()
+        add1 = reader_ocr.readtext(np.array(get_img),detail=0)
+        df=uploaded_image(add1)
+        im_df=pd.DataFrame(df)
+        st.dataframe(im_df)
 
         #Image to bytes
-            im_by= io.BytesIO()
-            get_img.save(im_by,format="png")
-            im_data=im_by.getvalue()
+        im_by= io.BytesIO()
+        get_img.save(im_by,format="png")
+        im_data=im_by.getvalue()
 
-            dict1={"Image":[im_data]}
-            im_df1=pd.DataFrame(dict1)
-            Image_df=pd.concat([im_df,im_df1],axis=1)
+        dict1={"Image":[im_data]}
+        im_df1=pd.DataFrame(dict1)
+        Image_df=pd.concat([im_df,im_df1],axis=1)
 
         #Store the DF to Database
-            create=st.button(":red[Create Database]")
-            if create:
-                with st.spinner("Kindly wait for few mins"):
-                    insert='''insert into bs(name,
-                                            designation,
-                                            company_name,
-                                            contact,
-                                            email,
-                                            website,
-                                            address,
-                                            pincode,
-                                            image_byt)
-                                            values(%s,%s,%s,%s,%s,%s,%s,%s,%s)'''
-                    for index,row in Image_df.iterrows():
-                        values=(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8])
-                        cursor.execute(insert,values)
-                        mydb.commit()
-                    st.success("All DONE")
-            
-            selected1 = option_menu(
-                menu_title="MANAGE DATA",
-                options=["UPDATE", "DELETE"],
-                icons=["database-add", "database-dash"],
-                menu_icon="database-gear",
-                default_index=0,
-                orientation="horizontal")
-            
-            if selected1 =="UPDATE":
-                cl1,cl2=st.columns(2)
-                with cl1:
-                    edit_name=st.text_input("Name",df['Name'][0])
-                    edit_des=st.text_input("Designation",df['Designation'][0])
-                    edit_co=st.text_input("Company",df['Company'][0])
-                    edit_cont=st.text_input("Contact",df['Contact'][0])
-                with cl2:
-                    edit_em=st.text_input("Email",df['Email'][0])
-                    edit_wb=st.text_input("Website",df['Website'][0])
-                    edit_ad=st.text_input("Address",df['Address'][0])
-                    edit_pn=st.text_input("Pincode",df['Pincode'][0])
+        create=st.button(":red[Create Database]")
+        if create:
+            with st.spinner("Kindly wait for few mins"):
+                insert='''insert into bs(name,
+                                        designation,
+                                        company_name,
+                                        contact,
+                                        email,
+                                        website,
+                                        address,
+                                        pincode,
+                                        image_byt)
+                                        values(%s,%s,%s,%s,%s,%s,%s,%s,%s)'''
+                for index,row in Image_df.iterrows():
+                    values=(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8])
+                    cursor.execute(insert,values)
+                    mydb.commit()
+                st.success("Successfully Uploaded")
+        
+        selected1 = option_menu(
+            menu_title="MANAGE DATA",
+            options=["UPDATE", "DELETE"],
+            icons=["database-add", "database-dash"],
+            menu_icon="database-gear",
+            default_index=0,
+            orientation="horizontal")
+        
+        if selected1 =="UPDATE":
+            cl1,cl2=st.columns(2)
+            with cl1:
+                edit_name=st.text_input("Name",df['Name'][0])
+                edit_des=st.text_input("Designation",df['Designation'][0])
+                edit_co=st.text_input("Company",df['Company'][0])
+                edit_cont=st.text_input("Contact",df['Contact'][0])
+                im_df['Name'],im_df['Designation'],im_df['Company'],im_df['Contact']=edit_name,edit_des,edit_co,edit_cont
 
-                if st.button("Update"):
-                    qr='''update bs set name=%s,designation=%s,company_name=%s,contact=%s,email=%s,website=%s,address=%s,pincode=%s 
-                        where name=%s'''
-                    values=(edit_name,edit_des,edit_co,edit_cont,edit_em,edit_wb,edit_ad,edit_pn)
+            with cl2:
+                edit_em=st.text_input("Email",df['Email'][0])
+                edit_wb=st.text_input("Website",df['Website'][0])
+                edit_ad=st.text_input("Address",df['Address'][0])
+                edit_pn=st.text_input("Pincode",df['Pincode'][0])
+                im_df['Email'],im_df['Website'],im_df['Address'],im_df['Pincode']=edit_em,edit_wb,edit_ad,edit_pn
+
+            update=st.button("Update")
+            if update:
+                st.spinner("Loading")
+                mode=im_df[["Name","Designation","Company","Contact","Email","Website","Address","Pincode"]]
+
+                st.dataframe(mode)
+
+                qr='''update bs set name = %s,designation = %s,company_name = %s,contact = %s,email = %s,website = %s,address = %s,pincode = %s 
+                        where name = %s'''
+                
+                for index,row in mode.iterrows():
+                    values=(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[0])
                     cursor.execute(qr,values)
                     mydb.commit()
-                    up=cursor.fetchall()
-                    st.caption("ALl done")
-                    st.dataframe(pd.DataFrame(up,columns=("name","designation","company_name","contact","email","website","address","pincode")))
+                st.success("Successfull updated")
+
+        if selected1 == "DELETE":
+            list=cursor.execute("select name from bs")
+            all_list=cursor.fetchall()
+            name=["select name"]
+            for i in all_list:
+                if i not in name:
+                    name.append(i[0])
+            select_name=st.selectbox("Select Details",options=name)
+            delete=st.button("DELETE DATA")
+            if select_name and delete:
+                st.spinner("Loanding")
+                del_Qr= f"delete from bs where name='{select_name}'"
+                cursor.execute(del_Qr)
+                mydb.commit()
+                st.success("Deleted")
+
+
 
 if selected=="Home":
     st.subheader(":red[BUSINESS CARD TEXT EXTRACTION USING EASYOCR]")
@@ -190,7 +216,8 @@ if selected=="Home":
     st.image(ey_image,caption="EASYOCR FRAMEWORK")
 
 if selected=="About":
-    st.subheader(":red[My Contact]")
-    st.subheader(":green[Project - BizCardX_Extracting Business Card Data]")
-    st.link_button("LinkedIn","https://www.linkedin.com/in/narayana-ram-sekar-b689a9201/")
-    st.link_button("GitHub","https://github.com/Narennrs1")
+    st.subheader(":gray[My Contact]")
+    st.image(Image.open("D:\\DTM9\\CS-3\\flyer.png"))
+    st.subheader(":black[Project - BizCardX_Extracting Business Card Data]")
+    st.link_button(":blue[LinkedIn]","https://www.linkedin.com/in/narayana-ram-sekar-b689a9201/")
+    st.link_button(":black[GitHub]","https://github.com/Narennrs1")
