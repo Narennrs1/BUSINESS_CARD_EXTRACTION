@@ -1,4 +1,4 @@
-#----------------------------------------------:IMMPORT MODULAS:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#Modules to Import
 import streamlit as st
 import cv2
 import easyocr
@@ -10,8 +10,9 @@ import pandas as pd
 import re
 from PIL import Image
 import numpy as np
-#----------------------------------------------:SQL CONNECTION:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#@st.cache_resource
+
+#Connection to DB
+
 mydb=psycopg2.connect(host='localhost',user='postgres',password='Sql0991',database='bz_card',port=5432)
 cursor=mydb.cursor()
 
@@ -27,7 +28,8 @@ create='''create table if not exists bs(id SERIAL PRIMARY KEY,
                                         image_byt bytea)'''
 cursor.execute(create)
 mydb.commit()
-#----------------------------------------------:Data extraction:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+#Extraction
 def uploaded_image(Card_img):
     imdict = {'Name': [], 'Designation': [], 'Company': [], 'Contact': [],
                   'Email': [], 'Website': [],
@@ -66,8 +68,7 @@ def uploaded_image(Card_img):
             values = 'NA'
             imdict[key] = [values]
     return imdict
-#----------------------------------------------:PAGE STEPUP:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+#page setup
 st.set_page_config(page_title="BUSIESS CARD EXTRACTION",
                    layout="wide",
                    page_icon="🧊",
@@ -86,14 +87,14 @@ with st.sidebar:
         manual_select=manual_select, key='menu_4')
 st.button(f":red[Switch Tab] {st.session_state.get('menu_option',1)}", key='switch_button')
 selected
-#----------------------------------------------:IMAGE READER/EDIT:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#Empty list
 df=[]
 im_df=[]
-
+#easyocr funcation
 def ecocr():
     read=easyocr.Reader(["en"])
     return read
-
+#Upload Card to extract Data
 if selected=="Upload":
     #GET IMAGE FROM USER
     st.caption(":red[Upload the Business card]")
@@ -136,7 +137,7 @@ if selected=="Upload":
                     cursor.execute(insert,values)
                     mydb.commit()
                 st.success("Successfully Uploaded")
-        
+        #option menu
         selected1 = option_menu(
             menu_title="MANAGE DATA",
             options=["UPDATE", "DELETE"],
@@ -160,7 +161,7 @@ if selected=="Upload":
                 edit_ad=st.text_input("Address",df['Address'][0])
                 edit_pn=st.text_input("Pincode",df['Pincode'][0])
                 im_df['Email'],im_df['Website'],im_df['Address'],im_df['Pincode']=edit_em,edit_wb,edit_ad,edit_pn
-
+            #update query
             update=st.button("Update")
             if update:
                 st.spinner("Loading")
@@ -176,7 +177,7 @@ if selected=="Upload":
                     cursor.execute(qr,values)
                     mydb.commit()
                 st.success("Successfull updated")
-
+        #Delete query
         if selected1 == "DELETE":
             list=cursor.execute("select name from bs")
             all_list=cursor.fetchall()
@@ -194,7 +195,7 @@ if selected=="Upload":
                 st.success("Deleted")
 
 
-
+#Home page
 if selected=="Home":
     st.subheader(":red[BUSINESS CARD TEXT EXTRACTION USING EASYOCR]")
     st.subheader(":gray[IMPORTANCE OF OCR]")
@@ -214,7 +215,8 @@ if selected=="Home":
     image=("D:\\DTM9\\CS-3\\easyocr_framework.jpeg")
     ey_image=Image.open(image)
     st.image(ey_image,caption="EASYOCR FRAMEWORK")
-
+  
+#About page
 if selected=="About":
     st.subheader(":gray[My Contact]")
     st.image(Image.open("D:\\DTM9\\CS-3\\flyer.png"))
