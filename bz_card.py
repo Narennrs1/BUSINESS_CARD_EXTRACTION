@@ -1,4 +1,4 @@
-#Modules to Import
+#----------------------------------------------:IMMPORT MODULAS:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 import streamlit as st
 import cv2
 import easyocr
@@ -10,9 +10,9 @@ import pandas as pd
 import re
 from PIL import Image
 import numpy as np
-
-#Connection to DB
-
+import os
+#----------------------------------------------:SQL CONNECTION:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#@st.cache_resource
 mydb=psycopg2.connect(host='localhost',user='postgres',password='Sql0991',database='bz_card',port=5432)
 cursor=mydb.cursor()
 
@@ -21,54 +21,95 @@ create='''create table if not exists bs(id SERIAL PRIMARY KEY,
                                         designation varchar(100),
                                         company_name varchar(100),
                                         contact varchar(100),
+                                        alternative varchar(100),
                                         email varchar(100),
                                         website varchar(100),
-                                        address text,
+                                        street varchar(100),
+                                        city varchar(100),
+                                        state varchar(100),
                                         pincode varchar(100),
                                         image_byt bytea)'''
 cursor.execute(create)
 mydb.commit()
-
-#Extraction
-def uploaded_image(Card_img):
-    imdict = {'Name': [], 'Designation': [], 'Company': [], 'Contact': [],
-                  'Email': [], 'Website': [],
-                  'Address': [], 'Pincode': []
-                  }
-    imdict['Name'].append(add1[0])
-    imdict['Designation'].append(add1[1])
-
-    for i in range(2, len(add1)):
-        if add1[i].startswith('+') or (add1[i].replace('-', '').isdigit() and '-' in add1[i]):
-            imdict['Contact'].append(add1[i])
-
-        elif '@' in add1[i] and '.com' in add1[i]:
-            smaller = add1[i].lower()
-            imdict['Email'].append(smaller)
-
-        elif 'www' in add1[i] or 'WWW ' in add1[i] or 'wwW' in add1[i]:
-            smaller = add1[i].lower()
-            imdict['Website'].append(smaller)
-
-        elif 'Tamil Nadu' in add1[i] or 'TamilNadu' in add1[i] or add1[i].isdigit():
-            imdict['Pincode'].append(add1[i])
-
-        elif re.match(r'^[A-Za-z]', add1[i]):
-            imdict['Company'].append(add1[i])
-
+#----------------------------------------------:Data extraction:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+def upload_image(image_path):
+    reader = easyocr.Reader(['en'])
+    result = reader.readtext(image_path)
+    details =[]
+    for i in range(len(result)):
+        details.append(result[i][1])
+    name = []
+    designation = []
+    contact =[]
+    email =[]
+    website = []
+    street =[]
+    city =[]
+    state =[]
+    pincode=[]
+    company =[]
+    
+    for i in range(len(details)):
+        match1 = re.findall('([0-9]+ [A-Z]+ [A-Za-z]+)., ([a-zA-Z]+). ([a-zA-Z]+)',details[i])    
+        match2 = re.findall('([0-9]+ [A-Z]+ [A-Za-z]+)., ([a-zA-Z]+)', details[i])
+        match3 = re.findall('^[E].+[a-z]',details[i])
+        match4 = re.findall('([A-Za-z]+) ([0-9]+)',details[i])
+        match5 = re.findall('([0-9]+ [a-zA-z]+)',details[i])    
+        match6 = re.findall('.com$' , details[i])
+        match7 = re.findall('([0-9]+)',details[i])
+        if details[i] == details[0]:
+            name.append(details[i])        
+        elif details[i] == details[1]:
+            designation.append(details[i])
+        elif '-' in details[i]:
+            contact.append(details[i])
+        elif '@' in details[i]:
+            email.append(details[i])
+        elif "www " in details[i].lower() or "www." in details[i].lower():
+            website.append(details[i])
+        elif "WWW" in details[i]:
+            website.append(details[i] +"." + details[i+1])
+        elif match6:
+            pass
+        elif match1:
+            street.append(match1[0][0])
+            city.append(match1[0][1])
+            state.append(match1[0][2])
+        elif match2:
+            street.append(match2[0][0])
+            city.append(match2[0][1])
+        elif match3:
+            city.append(match3[0])
+        elif match4:
+            state.append(match4[0][0])
+            pincode.append(match4[0][1])
+        elif match5:
+            street.append(match5[0]+' St,')
+        elif match7:
+            pincode.append(match7[0])
         else:
-            remove_colon = re.sub(r'[.,;]', '', add1[i])
-            imdict['Address'].append(remove_colon)
+            company.append(details[i])
+    if len(company)>1:
+        comp = company[0]+' '+company[1]
+        print(comp)
+    else:
+        comp = company[0]
+    if len(contact) >1:
+        contact_number = contact[0]
+        alternative_number = contact[1]
+    else:
+        contact_number = contact[0]
+        alternative_number = None
+        
+    
+    image_details = {'name':name[0],'designation':designation[0],'company_name':comp,
+                     'contact':contact_number,'alternative':alternative_number,'email':email[0],
+                     'website':website[0],'street':street[0],'city':city[0],'state':state[0],
+                     'pincode':pincode[0]}
+        
+    return image_details
+#----------------------------------------------:PAGE STEPUP:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    for key, values in imdict.items():
-        if len(values) > 0:
-            concat_string = ' '.join(values)
-            imdict[key] = [concat_string]
-        else:
-            values = 'NA'
-            imdict[key] = [values]
-    return imdict
-#page setup
 st.set_page_config(page_title="BUSIESS CARD EXTRACTION",
                    layout="wide",
                    page_icon="🧊",
@@ -87,26 +128,25 @@ with st.sidebar:
         manual_select=manual_select, key='menu_4')
 st.button(f":red[Switch Tab] {st.session_state.get('menu_option',1)}", key='switch_button')
 selected
-#Empty list
-df=[]
-im_df=[]
-#easyocr funcation
-def ecocr():
-    read=easyocr.Reader(["en"])
-    return read
-#Upload Card to extract Data
+#----------------------------------------------:IMAGE READER/EDIT:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#df=[]
+#im_df=[]   
+
+#def ecocr():
+#    read=easyocr.Reader(["en"])
+#    return read
+
 if selected=="Upload":
     #GET IMAGE FROM USER
     st.caption(":red[Upload the Business card]")
     bz_cd=st.file_uploader("Upload",label_visibility="collapsed",type=["png","jpg"],accept_multiple_files=False,help="Only .png & .jpg are allowed")
     #Process the image to df
     if bz_cd != None:
+        image_path = os.getcwd()+ "\\"+"dataset"+"\\"+ bz_cd.name
         get_img = Image.open(bz_cd)
         st.image(get_img,width=300,caption="Uploaded Business card")
-        reader_ocr = ecocr()
-        add1 = reader_ocr.readtext(np.array(get_img),detail=0)
-        df=uploaded_image(add1)
-        im_df=pd.DataFrame(df)
+        df=upload_image(image_path)
+        im_df=pd.DataFrame(df,index=np.arange(1))
         st.dataframe(im_df)
 
         #Image to bytes
@@ -126,18 +166,21 @@ if selected=="Upload":
                                         designation,
                                         company_name,
                                         contact,
+                                        alternative,
                                         email,
                                         website,
-                                        address,
+                                        street,
+                                        city,
+                                        state,
                                         pincode,
                                         image_byt)
-                                        values(%s,%s,%s,%s,%s,%s,%s,%s,%s)'''
+                                        values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'''
                 for index,row in Image_df.iterrows():
-                    values=(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8])
+                    values=(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[11])
                     cursor.execute(insert,values)
                     mydb.commit()
                 st.success("Successfully Uploaded")
-        #option menu
+        
         selected1 = option_menu(
             menu_title="MANAGE DATA",
             options=["UPDATE", "DELETE"],
@@ -149,35 +192,39 @@ if selected=="Upload":
         if selected1 =="UPDATE":
             cl1,cl2=st.columns(2)
             with cl1:
-                edit_name=st.text_input("Name",df['Name'][0])
-                edit_des=st.text_input("Designation",df['Designation'][0])
-                edit_co=st.text_input("Company",df['Company'][0])
-                edit_cont=st.text_input("Contact",df['Contact'][0])
-                im_df['Name'],im_df['Designation'],im_df['Company'],im_df['Contact']=edit_name,edit_des,edit_co,edit_cont
+                edit_name=st.text_input("Name",df['name'])
+                edit_des=st.text_input("Designation",df['designation'])
+                edit_co=st.text_input("Company",df['company_name'])
+                edit_cont=st.text_input("Contact",df['contact'])
+                edit_alt=st.text_input("Alternative",df['alternative'])
+                edit_em=st.text_input("Email",df['email'])
+                im_df['name'],im_df['designation'],im_df['company_name'],im_df['contact'],im_df['alternative'],im_df['email']=edit_name,edit_des,edit_co,edit_cont,edit_alt,edit_em
 
             with cl2:
-                edit_em=st.text_input("Email",df['Email'][0])
-                edit_wb=st.text_input("Website",df['Website'][0])
-                edit_ad=st.text_input("Address",df['Address'][0])
-                edit_pn=st.text_input("Pincode",df['Pincode'][0])
-                im_df['Email'],im_df['Website'],im_df['Address'],im_df['Pincode']=edit_em,edit_wb,edit_ad,edit_pn
-            #update query
+                edit_wb=st.text_input("Website",df["website"])
+                edit_st=st.text_input("Street",df['street'])
+                edit_ct=st.text_input("City",df['city'])
+                edit_ste=st.text_input("State",df['state'])
+                edit_pn=st.text_input("Pincode",df['pincode'])
+                im_df['website'],im_df['street'],im_df['city'],im_df['state'],im_df['pincode']=edit_wb,edit_st,edit_ct,edit_ste,edit_pn
+
             update=st.button("Update")
             if update:
                 st.spinner("Loading")
-                mode=im_df[["Name","Designation","Company","Contact","Email","Website","Address","Pincode"]]
+                mode={}
+                mode=im_df.copy()
+                nw_df=pd.DataFrame(mode,index=np.arange(1))
+                st.dataframe(nw_df)
 
-                st.dataframe(mode)
-
-                qr='''update bs set name = %s,designation = %s,company_name = %s,contact = %s,email = %s,website = %s,address = %s,pincode = %s 
+                qr='''update bs set name = %s,designation = %s,company_name = %s,contact = %s,alternative = %s,email = %s,website = %s,street = %s,city = %s,state = %s,pincode = %s
                         where name = %s'''
                 
-                for index,row in mode.iterrows():
-                    values=(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[0])
+                for index,row in nw_df.iterrows():
+                    values=(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[0])
                     cursor.execute(qr,values)
                     mydb.commit()
                 st.success("Successfull updated")
-        #Delete query
+
         if selected1 == "DELETE":
             list=cursor.execute("select name from bs")
             all_list=cursor.fetchall()
@@ -195,7 +242,7 @@ if selected=="Upload":
                 st.success("Deleted")
 
 
-#Home page
+
 if selected=="Home":
     st.subheader(":red[BUSINESS CARD TEXT EXTRACTION USING EASYOCR]")
     st.subheader(":gray[IMPORTANCE OF OCR]")
@@ -215,8 +262,7 @@ if selected=="Home":
     image=("D:\\DTM9\\CS-3\\easyocr_framework.jpeg")
     ey_image=Image.open(image)
     st.image(ey_image,caption="EASYOCR FRAMEWORK")
-  
-#About page
+
 if selected=="About":
     st.subheader(":gray[My Contact]")
     st.image(Image.open("D:\\DTM9\\CS-3\\flyer.png"))
