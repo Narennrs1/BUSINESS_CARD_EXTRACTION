@@ -1,6 +1,6 @@
-#----------------------------------------------:IMMPORT MODULAS:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#:IMPORT MODULAS:
 import streamlit as st
-import cv2
 import easyocr
 import io
 from io import BytesIO
@@ -11,13 +11,13 @@ import re
 from PIL import Image
 import numpy as np
 import os
-#----------------------------------------------:SQL CONNECTION:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#@st.cache_resource
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#:SQL CONNECTION:
+
 mydb=psycopg2.connect(host='localhost',user='postgres',password='Sql0991',database='bz_card',port=5432)
 cursor=mydb.cursor()
 
-create='''create table if not exists bs(id SERIAL PRIMARY KEY,
-                                        name varchar(100),
+create='''create table if not exists bs(name varchar(100),
                                         designation varchar(100),
                                         company_name varchar(100),
                                         contact varchar(100),
@@ -31,7 +31,8 @@ create='''create table if not exists bs(id SERIAL PRIMARY KEY,
                                         image_byt bytea)'''
 cursor.execute(create)
 mydb.commit()
-#----------------------------------------------:Data extraction:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#:Data extraction:
 def upload_image(image_path):
     reader = easyocr.Reader(['en'])
     result = reader.readtext(image_path)
@@ -108,7 +109,8 @@ def upload_image(image_path):
                      'pincode':pincode[0]}
         
     return image_details
-#----------------------------------------------:PAGE STEPUP:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#:PAGE STEPUP:
 
 st.set_page_config(page_title="BUSIESS CARD EXTRACTION",
                    layout="wide",
@@ -128,14 +130,8 @@ with st.sidebar:
         manual_select=manual_select, key='menu_4')
 st.button(f":red[Switch Tab] {st.session_state.get('menu_option',1)}", key='switch_button')
 selected
-#----------------------------------------------:IMAGE READER/EDIT:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#df=[]
-#im_df=[]   
-
-#def ecocr():
-#    read=easyocr.Reader(["en"])
-#    return read
-
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#:IMAGE READER/EDIT:
 if selected=="Upload":
     #GET IMAGE FROM USER
     st.caption(":red[Upload the Business card]")
@@ -159,7 +155,7 @@ if selected=="Upload":
         Image_df=pd.concat([im_df,im_df1],axis=1)
 
         #Store the DF to Database
-        create=st.button(":red[Create Database]")
+        create=st.button(":red[CREATE TABLE]")
         if create:
             with st.spinner("Kindly wait for few mins"):
                 insert='''insert into bs(name,
@@ -180,7 +176,8 @@ if selected=="Upload":
                     cursor.execute(insert,values)
                     mydb.commit()
                 st.success("Successfully Uploaded")
-        
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#:Update/Delete:        
         selected1 = option_menu(
             menu_title="MANAGE DATA",
             options=["UPDATE", "DELETE"],
@@ -211,18 +208,16 @@ if selected=="Upload":
             update=st.button("Update")
             if update:
                 st.spinner("Loading")
+
+                qr='''update bs set name = %s,designation = %s,company_name = %s,contact = %s,alternative = %s,
+                        email = %s,website = %s,street = %s,city = %s,state = %s,pincode = %s where name = %s '''
+                values=(edit_name,edit_des,edit_co,edit_cont,edit_alt,edit_em,edit_wb,edit_st,edit_ct,edit_ste,edit_pn,edit_name)
+                cursor.execute(qr,values)
+                mydb.commit()
                 mode={}
                 mode=im_df.copy()
                 nw_df=pd.DataFrame(mode,index=np.arange(1))
                 st.dataframe(nw_df)
-
-                qr='''update bs set name = %s,designation = %s,company_name = %s,contact = %s,alternative = %s,email = %s,website = %s,street = %s,city = %s,state = %s,pincode = %s
-                        where name = %s'''
-                
-                for index,row in nw_df.iterrows():
-                    values=(row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9],row[10],row[0])
-                    cursor.execute(qr,values)
-                    mydb.commit()
                 st.success("Successfull updated")
 
         if selected1 == "DELETE":
@@ -240,9 +235,8 @@ if selected=="Upload":
                 cursor.execute(del_Qr)
                 mydb.commit()
                 st.success("Deleted")
-
-
-
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#:HOME:
 if selected=="Home":
     st.subheader(":red[BUSINESS CARD TEXT EXTRACTION USING EASYOCR]")
     st.subheader(":gray[IMPORTANCE OF OCR]")
@@ -262,7 +256,8 @@ if selected=="Home":
     image=("D:\\DTM9\\CS-3\\easyocr_framework.jpeg")
     ey_image=Image.open(image)
     st.image(ey_image,caption="EASYOCR FRAMEWORK")
-
+#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#:About:
 if selected=="About":
     st.subheader(":gray[My Contact]")
     st.image(Image.open("D:\\DTM9\\CS-3\\flyer.png"))
