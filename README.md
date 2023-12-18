@@ -1,6 +1,5 @@
-# BUSINESS_CARD_EXTRACTION
-TEXT EXTRACTION USING EASYOCR
-
+# BUSINESS_CARD_EXTRACTION-OPTICAL CHARACTER RECOGNITION 
+About EasyOCR
 Text detection in images is an important technology for various applications, including text processing, image search, and machine translation. 
 Advances in optical character recognition (OCR) technology have made document retrieval more accurate and efficient, allowing businesses and organizations to extract useful information from images quickly. a powerful and easy-to-use OCR library that can find and extract text from a variety of formats. Let's look at the features of EasyOCR, its advantages over other OCR libraries, and how it can be implemented in a real-world application.
 
