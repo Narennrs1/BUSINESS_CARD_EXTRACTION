@@ -48,4 +48,78 @@ from streamlit_option_menu import option_menu
 reader = easyocr.Reader(['en'])
 result = reader.readtext(image_path)
 ```
-![img](/)
+
+
+![img](/select.jpg)
+
+
+#### Data extraction from Image :
+```
+image_to_text(result):
+for i in range(len(details)):
+        match1 = re.findall('([0-9]+ [A-Z]+ [A-Za-z]+)., ([a-zA-Z]+). ([a-zA-Z]+)',details[i])    
+        match2 = re.findall('([0-9]+ [A-Z]+ [A-Za-z]+)., ([a-zA-Z]+)', details[i])
+        match3 = re.findall('^[E].+[a-z]',details[i])
+        match4 = re.findall('([A-Za-z]+) ([0-9]+)',details[i])
+        match5 = re.findall('([0-9]+ [a-zA-z]+)',details[i])    
+        match6 = re.findall('.com$' , details[i])
+        match7 = re.findall('([0-9]+)',details[i])
+        if details[i] == details[0]:
+        ......
+image=image_to_text(result)
+df=pd.DataFrame(image)
+```
+| Name | Designation | Company_Name | contact | email | website | state | pincode |
+| -----| ----------- | ------------ | ------- | ----- | ------- | ----- | ------- |
+| Selva | DATA MANAGER | Selva Digitl tech | +123-456-7890 | WWW XYZI.com | hello@XYZ1.com | TamilNadu | 600113 |
+
+#### Dashboard Creation : 
+###### Home page :
+ * The code for the session button. Where need not to go sidemenu always to switch tabs
+```
+st.set_page_config(page_title="BUSIESS CARD EXTRACTION",
+                   layout="wide",
+                   page_icon="🧊",
+                   initial_sidebar_state='auto'
+                   )
+
+if st.session_state.get('switch_button', False):
+    st.session_state['menu_option'] = (st.session_state.get('menu_option',0) + 1) % 3
+    manual_select = st.session_state['menu_option']
+else:
+    manual_select = None
+```
+![img](/Home_page.jpg)
+
+ * The switch is useful to change the tabs.
+#
+###### Upload image : 
+ * The Streamlit allow us to upload file by using st.file_uploader()
+![img](/upload1.jpg)
+###### create table SQL : 
+ * The Streamlit allow us to dataframe allow us to show data in dataframe format st.datframe() and I store table creation funcation in st.button. 
+![img](/upload2.jpg)
+###### Update and transmit to sql : 
+ * The Streamlit allow us to get data from user and store it in text format by using st.text_input().Once i get all the desire update data from user i stored the update query in st.button() [update]
+![img](/upload3.jpg)
+
+###### Delete from Dashboard : 
+ * The Streamlit allow us show tabs with the primary tab. And it can be done by using st.option_menu. To use this we need to install option_menu as it is the third party source. Delete tab allow user to delete the data by using the name of the card.
+![img](/upload4.jpg)
+### Explore more methods in streamlit : 
+[Streamlit](https://docs.streamlit.io/) - To Create simple and interactive UI
+
+
+
+
+<p align="left">
+<b><em>TOP LANGUAGE:</em></b> <br/>
+
+
+![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=Narennrs1&layout=compact)
+
+
+<p align="left">
+<b><em>Point of Contacting:</em></b> <br/>
+  
+<a href="mailto:narennrsj@gmail.com">![narennrsj@gamil.com](https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white)</a> <a href="<https://www.linkedin.com/in/narayana-ram-sekar-b689a9201/>">![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)</a>
