@@ -1,3 +1,4 @@
+![img](/)
 # BUSINESS_CARD_EXTRACTION-OPTICAL CHARACTER RECOGNITION 
 About EasyOCR
 Text detection in images is an important technology for various applications, including text processing, image search, and machine translation. 
