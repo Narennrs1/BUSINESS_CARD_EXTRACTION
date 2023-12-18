@@ -76,7 +76,8 @@ df=pd.DataFrame(image)
 
 #### Dashboard Creation : 
 ###### Home page :
- * The code for the session button. Where need not to go sidemenu always to switch tabs
+ * In a home_page, the switch button is used to change the tabs of the UI. The st.session is used to create this button. By using  this method we do need to go to sidemenu always to switch the menu
+
 ```
 st.set_page_config(page_title="BUSIESS CARD EXTRACTION",
                    layout="wide",
