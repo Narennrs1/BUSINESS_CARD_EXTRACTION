@@ -99,7 +99,7 @@ else:
  * The Streamlit allow us to upload file by using st.file_uploader()
 ![img](/upload1.jpg)
 ###### create table SQL : 
- * The Streamlit allow us to dataframe allow us to show data in dataframe format st.datframe() and I store table creation funcation in st.button. 
+ * The Streamlit allow us to show data in dataframe format st.datframe() and I store table creation funcation in st.button. 
 ![img](/upload2.jpg)
 ###### Update and transmit to sql : 
  * The Streamlit allow us to get data from user and store it in text format by using st.text_input().Once i get all the desire update data from user i stored the update query in st.button() [update]
