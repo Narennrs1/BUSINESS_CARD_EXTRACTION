@@ -9,7 +9,7 @@ Jaided AI was founded in 2020. Our goal is to distribute the benefits of AI to t
 
 ![img](/easyocr_framework.jpeg)
 
-## KINDLY CHECK OUT THE VIDEO OF THE PROJECT : - [click here](https://www.linkedin.com/posts/narayana-ram-sekar-b689a9201_guvi-guvigeeknetworksiitmresearchpark-activity-7137675483927760896-_KoS?utm_source=share&utm_medium=member_desktop)
+## KINDLY CHECK OUT THE VIDEO OF THE PROJECT : - [click here](https://www.linkedin.com/feed/update/urn:li:share:7142766343489069056/)
 
 #### Hi Everyone 🫶
  * Text detection can be done by various algorithms. Such as tesseract OCR, EasyOCR, and keras ocr. In this project, I used Easyocr as my primary algorithm. And I have given a brief intro about the Easy-OCR above. For reference, I leave a link for other OCRs.
